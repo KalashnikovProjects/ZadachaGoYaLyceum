@@ -26,6 +26,7 @@
 * **agents** - запускает агентов, количество задаётся в 55 строке [docker-compose.yaml](docker-compose.yml) (там устанавливается environment)
 * **postgres** - база данных
 * **rabbitmq** - брокер сообщений
+* **pgadmin** - Админ панель базы данных, доступна на http://localhost:5050/login (для входа `admin@admin.com`, `root`)
 
 ## Использование
 1. Инструкции для API не нужны ведь есть интерфейс на http://localhost:80/, API находится на http://localhost:8080/ , инструкции к нему есть в схеме
