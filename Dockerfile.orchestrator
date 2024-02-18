@@ -1,0 +1,17 @@
+FROM golang:latest AS builder
+EXPOSE 8080
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+COPY ./config ./config
+COPY ./internal ./internal
+COPY ./pkg ./pkg
+COPY ./cmd/orchestrator ./cmd/orchestrator
+
+RUN go build -o orchestrator ./cmd/orchestrator
+
+CMD ["/app/orchestrator"]

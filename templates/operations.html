@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Время выполнения операций</title>
+    <!-- Подключаем Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5">Распределенный вычислитель арифметических выражений</h1>
+    <h2 class="mt-5">Выберите страницу:</h2>
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link" href="/">Главная</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/agents">Статусы серверов (агентов)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/expressions">Статусы выражений</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/operations">Длительность выполнения операций</a>
+        </li>
+    </ul>
+    <div class="mt-5">
+        <h1>Длительность выполнения операций</h1>
+        <h3>(в секундах)</h3>
+    </div>
+    <div id="operations"></div>
+</div>
+
+<!-- Подключаем Bootstrap JS и jQuery (необходим для некоторых функций Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    // Функция для создания поля времени для каждой операции
+    function createOperationField(operation) {
+        const operationField = document.createElement('div');
+        operationField.classList.add('mt-3');
+
+        const header = document.createElement('h3');
+        header.textContent = ["Сложение +", "Вычитание -", "Умножение *", "Деление /"][operation.Id - 1];
+
+
+        const alo = document.createElement('div');
+        alo.classList.add('d-flex')
+        const inputField = document.createElement('input');
+        inputField.setAttribute('type', 'number');
+        inputField.setAttribute('value', operation.Time);
+        inputField.setAttribute('data-id', operation.Id);
+        inputField.classList.add('form-control', "mt-1", "w-25");
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Отправить';
+        submitButton.classList.add('btn', 'btn-secondary');
+
+        const messageField = document.createElement('div');
+        messageField.classList.add('text-muted');
+
+
+        // Обработчик события для кнопки отправки
+        submitButton.addEventListener('click', function(event) {
+            const inputField = event.target.parentElement.querySelector('input');
+            const newTime = parseInt(inputField.value);
+            const operationId = inputField.getAttribute('data-id');
+            updateOperationTime(operationId, newTime, messageField);
+        });
+        operationField.appendChild(header);
+        alo.appendChild(inputField);
+        alo.appendChild(submitButton);
+        operationField.appendChild(alo)
+        operationField.appendChild(messageField);
+
+
+        return operationField;
+    }
+
+    // Функция для отправки PUT запроса на обновление времени операции
+    function updateOperationTime(operationId, newTime, messageField) {
+        fetch(`http://localhost:8080/operations/${operationId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newTime)
+        })
+            .then(response => {
+                if (response.ok) {
+                    messageField.textContent = 'Длительность операции успешно обновлена!';
+                } else {
+                    messageField.textContent = 'Не верная длительность операции';
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при выполнении запроса:', error);
+            });
+    }
+
+    // Запрос GET на сервер для получения списка операций
+    fetch('http://localhost:8080/operations')
+        .then(response => response.json())
+        .then(operations => {
+            const operationsContainer = document.getElementById('operations');
+            // Создаем поле времени для каждой операции
+            operations.forEach(operation => {
+                const operationField = createOperationField(operation);
+                operationsContainer.appendChild(operationField);
+            });
+        })
+        .catch(error => {
+            console.error('Ошибка при выполнении запроса:', error);
+        });
+</script>
+</body>
+</html>

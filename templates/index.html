@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Распределенный вычислитель арифметических выражений</title>
+    <!-- Подключаем Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1 class="mt-5">Распределенный вычислитель арифметических выражений</h1>
+    <h2 class="mt-5">Выберите страницу:</h2>
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <a class="nav-link active" href="/">Главная</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/agents">Статусы серверов (агентов)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/expressions">Статусы выражений</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/operations">Длительность выполнения операций</a>
+        </li>
+    </ul>
+    <form id="expressionForm1" class="mt-5">
+        <label for="expression1"><h3>Введите ваше выражение:</h3></label><br>
+        <input type="text" id="expression1" name="expression1" class="form-control"><br>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+    </form>
+
+    <div id="response"></div>
+    <div id="result1" class="mt-3"></div> <!-- Элемент для отображения результата -->
+    <form id="expressionForm2" class="mt-5">
+        <label for="expression2"><h3>Введите ID вашего выражения:</h3></label><br>
+        <input type="text" id="expression2" name="expression2" class="form-control"><br>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+    </form>
+
+    <div id="response2"></div>
+    <div id="result2" class="mt-3"></div> <!-- Элемент для отображения результата -->
+</div>
+
+<!-- Подключаем Bootstrap JS и jQuery (необходим для некоторых функций Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.getElementById('expressionForm1').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const expression = document.getElementById('expression1').value;
+        fetch('http://localhost:8080/expressions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: expression // Обернули expression в объект
+        }).then(response => Promise.all([response.text(), response.status]))
+            .then(data => {
+                let [text, status] = data
+                if (~~(status / 100) === 2) {
+                    document.getElementById('result1').innerHTML = "Вы можете получить прогресс выполнения вашего выражения по ID<strong>: "+text + "</strong> в поле снизу";
+                    document.getElementById('expression2').value = text
+                } else if (~~(status / 100) === 4) {
+                    document.getElementById('result1').innerHTML = "Ошибка в выражении: <span style='color: red; '>" + text + "</span>";
+                } else {
+                    document.getElementById('result1').innerHTML = "Ошибка на стороне сервера: <span style='color: red; '>" + text + "</span>";
+                }
+
+            })
+            .catch(error => {
+                console.error('Ошибка при выполнении запроса:', error);
+            });
+    });
+
+    document.getElementById('expressionForm2').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const id = document.getElementById('expression2').value;
+        fetch('http://localhost:8080/expressions/'+id, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        }).then(response => Promise.all([response.text(), response.status]))
+            .then(data => {
+                let [text, status] = data
+                // Показываем результат на странице
+                if (~~(status / 100) === 2) {
+                    const resultObject = JSON.parse(text);
+                    let inner = `
+                        <p><strong>ID:</strong> ${resultObject.Id}</p>
+                        <p><strong>Выражение:</strong> ${resultObject.NeedToDo}</p>
+                        <p><strong>Статус:</strong> ${ {"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[resultObject.Status]}</p>
+                        <p><strong>Начало вычисления:</strong> ${[new Date(resultObject.StartTime * 1000).toLocaleString()]}</p>
+                    `
+                    if (resultObject.Status === "done") {
+                        inner += `<p><strong>Конец вычисления:</strong> ${[new Date(resultObject.EndTime * 1000).toLocaleString()]}</p>`
+                        inner += `<p><strong>Результат:</strong> ${resultObject.Result}</p>`
+                    }
+                    document.getElementById('result2').innerHTML = inner;
+                } else if (~~(status / 100) === 4) {
+                    document.getElementById('result2').innerHTML = "Неверный id: <span style='color: red; '>" + text + "</span>";
+                } else {
+                    document.getElementById('result2').innerHTML = "Ошибка на стороне сервера: <span style='color: red; '>" + text + "</span>";
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при выполнении запроса:', error);
+            });
+    });
+</script>
+</body>
+</html>

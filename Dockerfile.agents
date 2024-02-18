@@ -1,0 +1,15 @@
+FROM golang:latest AS builder
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+COPY ./config ./config
+COPY ./internal ./internal
+COPY ./cmd/agents ./cmd/agents
+
+RUN go build -o agents ./cmd/agents
+
+CMD ["/app/agents"]

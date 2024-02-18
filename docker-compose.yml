@@ -1,0 +1,76 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres
+    hostname: postgres
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "mysecretpasswordalo"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  orchestrator:
+    build:
+      context: ./
+      dockerfile: Dockerfile.orchestrator
+    environment:
+      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: "rmuser"
+      RABBITMQ_DEFAULT_PASS: "rmpassword"
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit disk_free_limit 2147483648"
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  user_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.user_server
+    ports:
+      - "80:80"
+
+  agents:
+    build:
+      context: .
+      dockerfile: Dockerfile.agents
+    environment:
+      AGENT_COUNT: "5"
+      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
+
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4:7
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+
+volumes:
+  postgres:
+  pgadmin:
