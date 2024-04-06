@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Zadacha/internal/api/agent"
+	"Zadacha/internal/agent"
 	"github.com/xlab/closer"
 )
 

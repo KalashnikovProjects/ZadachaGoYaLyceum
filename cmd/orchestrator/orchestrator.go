@@ -1,11 +1,11 @@
 package main
 
 import (
-	"Zadacha/internal/api/orchestrator"
+	"Zadacha/internal/api"
 	"github.com/xlab/closer"
 )
 
 func main() {
-	orchestrator.Run()
+	api.Run()
 	closer.Hold()
 }

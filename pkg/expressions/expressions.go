@@ -1,6 +1,7 @@
 package expressions
 
 import (
+	"Zadacha/pkg/my_errors"
 	"regexp"
 	"strings"
 )
@@ -21,9 +22,9 @@ func precedence(op byte) int {
 // Оно проверяет структуру: {число или выражение в скобках(что внутри скобок не важно)} ({знак}{число или выражение в скобках})  // Вторая большая скобка со {знак} может повторяться любое колво раз
 var mathRegRoot, _ = regexp.Compile(`^ *(\d+(\.\d+)?|\([^()]*((\([^()]*)*([^()]*\))*)[^()]*\))( *[+\-*/] *(\d+(\.\d+)?|\([^()]*((\([^()]*)*([^()]*\))*)[^()]*\)))* *$`) // 💀
 
-func Validate(infix string) bool {
+func Validate(infix string) error {
 	if !mathRegRoot.MatchString(infix) || strings.Count(infix, "(") != strings.Count(infix, ")") {
-		return false
+		return my_errors.ExpressionValidateError
 	}
 	res := ""
 	brCount := 0
@@ -36,21 +37,22 @@ func Validate(infix string) bool {
 		case ")":
 			brCount -= 1
 			if brCount < 0 {
-				return false
+				return my_errors.ExpressionValidateError
 			}
 		}
 		if brCount != 0 {
 			res += string(i)
 		}
 		if brCount == 0 && len(res) >= 2 && brr {
-			if string(i) != infix && !Validate(res[1:]) {
-				return false
+			err := Validate(res[1:])
+			if err != nil && string(i) != infix {
+				return err
 			}
 			res = ""
 			brr = false
 		}
 	}
-	return true
+	return nil
 }
 
 // InfixToPostfix Функция для преобразования инфиксной формы записи выражения в постфиксную

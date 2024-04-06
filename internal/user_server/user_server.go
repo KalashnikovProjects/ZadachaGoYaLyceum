@@ -2,19 +2,24 @@ package user_server
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 	"os"
 )
 
-// Тут ничего интересного, просто возвращает html
+// Тут ничего интересного, просто возвращает html и проверка аунтефикации
 
 func Run() {
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/agents", agentsPage)
-	http.HandleFunc("/expressions", expressionsPage)
-	http.HandleFunc("/operations", operationsPage)
+	router := mux.NewRouter()
+
+	router.HandleFunc("/", homePage)
+	router.HandleFunc("/agents", agentsPage)
+	router.HandleFunc("/expressions", expressionsPage)
+	router.HandleFunc("/operations", operationsPage)
+	router.HandleFunc("/login", operationsPage)
 	fmt.Println("User server запущен на  http://localhost (порт 80)")
-	http.ListenAndServe(":80", nil)
+	log.Fatal(http.ListenAndServe(":80", router))
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +28,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
 	w.Write(html)
 }
 
@@ -33,7 +37,6 @@ func agentsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
 	w.Write(html)
 }
 
@@ -43,7 +46,6 @@ func expressionsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
 	w.Write(html)
 }
 
@@ -53,6 +55,5 @@ func operationsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
 	w.Write(html)
 }

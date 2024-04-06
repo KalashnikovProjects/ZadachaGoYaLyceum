@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"Zadacha/config"
-	"Zadacha/internal/api/db_connect"
+	"Zadacha/internal/db_connect"
+	"Zadacha/internal/entities"
 	"context"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -35,7 +35,7 @@ func Agent() {
 	defer db.Close()
 
 	id := db.AgentPing(1, "create", "Агент запускается")
-	defer func() { db.DeleteAgent(id); db.Close() }()
+	defer db.DeleteAgent(id)
 	closer.Bind(func() {
 		db.DeleteAgent(id)
 	})
@@ -54,10 +54,8 @@ func Agent() {
 	// Создаем канал
 	ch, err := conn.Channel()
 	if err != nil {
-		if err != nil {
-			db.AgentPing(id, "error", "Ошибка создания канала RabbitMQ")
-			return
-		}
+		db.AgentPing(id, "my_errors", "Ошибка создания канала RabbitMQ")
+		return
 	}
 	defer ch.Close()
 	// Объявляем очередь
@@ -70,10 +68,8 @@ func Agent() {
 		nil,          // arguments
 	)
 	if err != nil {
-		if err != nil {
-			db.AgentPing(id, "error", "Ошибка создания очереди RabbitMQ")
-			return
-		}
+		db.AgentPing(id, "my_errors", "Ошибка создания очереди RabbitMQ")
+		return
 	}
 
 	msgs, err := ch.Consume(
@@ -86,11 +82,11 @@ func Agent() {
 		nil,          // Args
 	)
 	if err != nil {
-		db.AgentPing(id, "error", "Ошибка чтения очереди RabbitMQ")
+		db.AgentPing(id, "my_errors", "Ошибка чтения очереди RabbitMQ")
 		return
 	}
 	db.AgentPing(id, "waiting", "")
-	var task config.Operation
+	var task entities.Operation
 	var FinalOperId int
 	closer.Bind(func() {
 		// Чистое отключение агента
@@ -111,7 +107,7 @@ func Agent() {
 			db.AgentPing(id, "waiting", "")
 			continue
 		}
-		task, err = db.Get(taskId)
+		task, err = db.GetOperation(taskId)
 		if err != nil {
 			db.AgentPing(id, "waiting", "")
 			db.Delete(taskId)
@@ -119,19 +115,20 @@ func Agent() {
 		}
 		FinalOperId = task.FinalOperationId
 		db.AgentPing(id, "process", fmt.Sprintf("%f %s %f", task.LeftData, task.Znak, task.RightData))
+
 		var res float64
 		switch task.Znak {
 		case "+":
 			t, _ := db.GetOperationTimeByID(1)
-			time.Sleep(time.Duration(t.Time) * time.Second)
+			time.Sleep(time.Duration(t.Plus) * time.Second)
 			res = task.LeftData + task.RightData
 		case "-":
 			t, _ := db.GetOperationTimeByID(2)
-			time.Sleep(time.Duration(t.Time) * time.Second)
+			time.Sleep(time.Duration(t.Minus) * time.Second)
 			res = task.LeftData - task.RightData
 		case "*":
 			t, _ := db.GetOperationTimeByID(3)
-			time.Sleep(time.Duration(t.Time) * time.Second)
+			time.Sleep(time.Duration(t.Multiplication) * time.Second)
 			res = task.LeftData * task.RightData
 		case "/":
 			if task.RightData == 0 {
@@ -141,7 +138,7 @@ func Agent() {
 				continue
 			}
 			t, _ := db.GetOperationTimeByID(4)
-			time.Sleep(time.Duration(t.Time) * time.Second)
+			time.Sleep(time.Duration(t.Division) * time.Second)
 			res = task.LeftData / task.RightData
 		}
 		finOper, err := db.GetFinalOperationByID(task.FinalOperationId)
@@ -176,7 +173,7 @@ func Agent() {
 		}
 		if ready, _ := db.IsReadyToExecute(task.FatherId); ready {
 			// Отправляем операцию выше в очередь на выполнение
-			go func(task config.Operation) {
+			go func(task entities.Operation) {
 				err = ch.PublishWithContext(
 					context.Background(),
 					"",           // exchange

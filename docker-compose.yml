@@ -17,7 +17,7 @@ services:
   orchestrator:
     build:
       context: ./
-      dockerfile: Dockerfile.orchestrator
+      dockerfile: Docker/Dockerfile.orchestrator
     environment:
       POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
     ports:
@@ -43,14 +43,14 @@ services:
   user_server:
     build:
       context: .
-      dockerfile: Dockerfile.user_server
+      dockerfile: Docker/Dockerfile.user_server
     ports:
       - "80:80"
 
   agents:
     build:
       context: .
-      dockerfile: Dockerfile.agents
+      dockerfile: Docker/Dockerfile.agents
     environment:
       AGENT_COUNT: "5"
       POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
