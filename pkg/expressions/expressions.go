@@ -1,7 +1,7 @@
 package expressions
 
 import (
-	"Zadacha/pkg/my_errors"
+	"Zadacha/internal/my_errors"
 	"regexp"
 	"strings"
 )
@@ -36,9 +36,6 @@ func Validate(infix string) error {
 			brr = true
 		case ")":
 			brCount -= 1
-			if brCount < 0 {
-				return my_errors.ExpressionValidateError
-			}
 		}
 		if brCount != 0 {
 			res += string(i)

@@ -56,14 +56,14 @@
         .then(response => response.json())
         .then(data => {
             const agentDataElement = $('#agentData');
-            data.forEach(agent => {
+            data.forEach(expression => {
                 const row = $('<tr>').append(
-                    $('<td>').text(agent.Id),
-                    $('<td>').text(agent.NeedToDo),
-                    $('<td>').html({"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[agent.Status]),
-                    $('<td>').text(new Date(agent.StartTime * 1000).toLocaleString()),
-                    $('<td>').html({false: "", true: new Date(agent.EndTime * 1000).toLocaleString()}[agent.Status!=="process"]),
-                    $('<td>').text({false: "", true: agent.Result}[agent.Status==="done"]),
+                    $('<td>').text(expression.id),
+                    $('<td>').text(expression.need_to_do),
+                    $('<td>').html({"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[expression.status]),
+                    $('<td>').text(new Date(expression.start_time * 1000).toLocaleString()),
+                    $('<td>').html({false: "", true: new Date(expression.end_time * 1000).toLocaleString()}[expression.status!=="process"]),
+                    $('<td>').text({false: "", true: expression.result}[expression.status==="done"]),
                 );
                 agentDataElement.append(row);
             });

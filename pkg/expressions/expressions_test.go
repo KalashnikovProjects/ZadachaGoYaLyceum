@@ -1,12 +1,10 @@
 package expressions
 
 import (
-	"Zadacha/pkg/my_errors"
+	"Zadacha/internal/my_errors"
 	"errors"
 	"testing"
 )
-
-// Спасибо ChatGPT, почти все тесты написал он
 
 func TestValidate(t *testing.T) {
 	testCases := []struct {
@@ -29,7 +27,8 @@ func TestValidate(t *testing.T) {
 		{"(1+2)*3*(4+5)", nil},                              // Верный ввод с несколькими уровнями скобок
 		{"( 1 + 2 ) * ( 4 + 5 )", nil},                      // Верный ввод с несколькими уровнями скобок
 		{"((1+2)*(4+5))*((6+7)/(8+9))", nil},                // Верный ввод с множеством уровней скобок
-		//{"(1+2)(3+4)", my_errors.ExpressionValidateError},                 // Неверный ввод, отсутствие оператора между выражениями в скобках
+		{"1 + 2)", my_errors.ExpressionValidateError},       // Много закрывающих скобок
+		//{"(1+2)(3+4)", my_errors.ExpressionValidateError},               // Неверный ввод, отсутствие оператора между выражениями в скобках
 	}
 
 	for _, tc := range testCases {

@@ -7,7 +7,6 @@ COPY go.mod .
 COPY go.sum .
 
 RUN go mod download
-COPY ./config ./config
 COPY ./templates ./templates
 COPY ./internal ./internal
 COPY ./cmd/user_server ./cmd/user_server

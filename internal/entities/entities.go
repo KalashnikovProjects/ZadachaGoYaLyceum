@@ -1,53 +1,54 @@
 package entities
 
 // TODO:
-//    2. Middleware для user_server, проверяет session storage, если плохо - редирект на /login
-//    3. Добавить user id во все запросы к expressions, operations, доделать operations_time
-//  2.1  Убрать rabbitMQ, центральная горутина Агент принимает по GRPC заказы и каналами распределяет по агентикам
-//  3.1  Добавить микро тестов
-//  3.2  Добавить 2-3 гига тестов всего и вся
+//    1. Middleware для user_server, проверяет session storage, если плохо - редирект на /login
+//    2  Убрать rabbitMQ, центральная горутина Агент принимает по GRPC заказы и каналами распределяет по агентикам
+//    3  Добавить микро тестов
+//    4  Добавить 2-3 гига тестов всего и вся
 
 // Operation - ORM для базы данных sqlite и общее представление операции (x + y), мы храним состояние для каждого финального, начального и промежуточного вычисления
 // финальное вычисление - 2 готовых числа, промежуточное
 // Всех кроме финального имеют не LeftData или RightData и LeftIsReady, RightIsReady = 0, они ждут пока их изменят более
 // низкоуровневые (финальные вычисления) и так рекурсивно оно решается.
 type Operation struct {
-	Id               int `gorm:"unique; primaryKey; autoIncrement"`
-	Znak             string
-	LeftIsReady      int
-	LeftData         float64
-	RightIsReady     int
-	RightData        float64
-	FatherId         int
-	SonSide          int // 0 или 1 (левая или правая векта) к которой крепится выражение
-	FinalOperationId int // id из Expression
+	Id           int     `json:"id"`
+	Znak         string  `json:"znak"`
+	LeftIsReady  int     `json:"-"`
+	LeftData     float64 `json:"-"`
+	RightIsReady int     `json:"-"`
+	RightData    float64 `json:"-"`
+	FatherId     int     `json:"-"`
+	SonSide      int     `json:"-"`             // 0 или 1 (левая или правая векта) к которой крепится выражение
+	ExpressionId int     `json:"expression_id"` // id из Expression
 }
 
 type Expression struct {
-	Id        int `gorm:"unique; primaryKey; autoIncrement"`
-	NeedToDo  string
-	Status    string  // my_errors / process / done
-	Result    float64 // если статус done, иначе -1
-	StartTime int
-	EndTime   int
-	UserId    int
+	Id        int     `json:"id"`
+	NeedToDo  string  `json:"need_to_do"`
+	Status    string  `json:"status"` // error / process / done
+	Result    float64 `json:"result"` // если статус done, иначе -1
+	StartTime int     `json:"start_time"`
+	EndTime   int     `json:"end_time"`
+	UserId    int     `json:"user_id"`
 }
 
 type Agent struct {
-	Id         int    `gorm:"unique; primaryKey; autoIncrement"`
-	Status     string // my_errors / process / waiting    my_errors только если агент не смог инициализироваться
-	StatusText string // сообщение о ошибке или выполняемое выражение
-	PingTime   int
+	Id         int    `json:"id"`
+	Status     string `json:"status"`      // error / process / waiting    my_errors только если агент не смог инициализироваться
+	StatusText string `json:"status_text"` // сообщение о ошибке или выполняемое выражение
+	PingTime   int    `json:"ping_time"`
 }
 
 type User struct {
-	Id               int `gorm:"unique; primaryKey; autoIncrement"`
-	PasswordHash     string
-	OperationsTimeId int
+	Id               int    `json:"id"`
+	Name             string `json:"name"`
+	Password         string `json:"password"`
+	PasswordHash     string `json:"-"`
+	OperationsTimeId int    `json:"-"`
 }
 
 type OperationsTime struct {
-	Id             int `gorm:"unique; primaryKey"`
+	Id             int
 	Plus           int `json:"plus"` // В секундах
 	Minus          int `json:"minus"`
 	Division       int `json:"division"`

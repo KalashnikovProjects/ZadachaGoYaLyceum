@@ -6,4 +6,5 @@ var (
 	ExpressionValidateError = errors.New("expression validate error")
 	StrangeSymbolsError     = errors.New("strange symbols error")
 	AuthenticationError     = errors.New("authentication error")
+	PermissionDeniedError   = errors.New("permission denied error")
 )

@@ -4,6 +4,7 @@ import (
 	"Zadacha/internal/db_connect"
 	"Zadacha/internal/entities"
 	"context"
+	"database/sql"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/xlab/closer"
@@ -16,16 +17,16 @@ import (
 func CreateAgents() {
 	count, _ := strconv.Atoi(os.Getenv("AGENT_COUNT"))
 	for i := 0; i < count; i++ {
-		go Agent()
+		go Agent(context.Background())
 	}
 }
 
-func Agent() {
-	var db db_connect.DBConnection
+func Agent(ctx context.Context) {
+	var db *sql.DB
 	var err error
 	log.Println("Загрузка базы данных агента")
 	for {
-		db, err = db_connect.OpenDb(os.Getenv("POSTGRES_STRING"))
+		db, err = db_connect.OpenDb(ctx, os.Getenv("POSTGRES_STRING"))
 		if err == nil {
 			break
 		}
@@ -34,10 +35,10 @@ func Agent() {
 	log.Println("Базы данных агента загружена")
 	defer db.Close()
 
-	id := db.AgentPing(1, "create", "Агент запускается")
-	defer db.DeleteAgent(id)
+	id := db_connect.AgentPing(ctx, db, 1, "create", "Агент запускается")
+	defer db_connect.DeleteAgent(ctx, db, id)
 	closer.Bind(func() {
-		db.DeleteAgent(id)
+		db_connect.DeleteAgent(ctx, db, id)
 	})
 
 	var conn *amqp.Connection
@@ -54,7 +55,7 @@ func Agent() {
 	// Создаем канал
 	ch, err := conn.Channel()
 	if err != nil {
-		db.AgentPing(id, "my_errors", "Ошибка создания канала RabbitMQ")
+		db_connect.AgentPing(ctx, db, id, "error", "Ошибка создания канала RabbitMQ")
 		return
 	}
 	defer ch.Close()
@@ -68,7 +69,7 @@ func Agent() {
 		nil,          // arguments
 	)
 	if err != nil {
-		db.AgentPing(id, "my_errors", "Ошибка создания очереди RabbitMQ")
+		db_connect.AgentPing(ctx, db, id, "error", "Ошибка создания очереди RabbitMQ")
 		return
 	}
 
@@ -82,96 +83,102 @@ func Agent() {
 		nil,          // Args
 	)
 	if err != nil {
-		db.AgentPing(id, "my_errors", "Ошибка чтения очереди RabbitMQ")
+		db_connect.AgentPing(ctx, db, id, "error", "Ошибка чтения очереди RabbitMQ")
 		return
 	}
-	db.AgentPing(id, "waiting", "")
+	db_connect.AgentPing(ctx, db, id, "waiting", "")
 	var task entities.Operation
-	var FinalOperId int
+	var expressionId int
 	closer.Bind(func() {
 		// Чистое отключение агента
-		db.Delete(task.Id)
-		if a, _ := db.GetFinalOperationByID(FinalOperId); a.Status == "process" {
-			db.OhNoFinalOperationError(FinalOperId)
+		db_connect.DeleteOperation(ctx, db, task.Id)
+		if a, _ := db_connect.GetExpressionByID(ctx, db, expressionId); a.Status == "process" {
+			db_connect.OhNoExpressionError(ctx, db, expressionId)
 		}
 
 	})
 	for message := range msgs {
 		err := message.Ack(false)
 		if err != nil {
-			db.AgentPing(id, "waiting", "")
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
 			continue
 		}
 		taskId, err := strconv.Atoi(string(message.Body))
 		if err != nil {
-			db.AgentPing(id, "waiting", "")
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
 			continue
 		}
-		task, err = db.GetOperation(taskId)
+		task, err = db_connect.GetOperation(ctx, db, taskId)
 		if err != nil {
-			db.AgentPing(id, "waiting", "")
-			db.Delete(taskId)
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
+			db_connect.DeleteOperation(ctx, db, taskId)
 			continue
 		}
-		FinalOperId = task.FinalOperationId
-		db.AgentPing(id, "process", fmt.Sprintf("%f %s %f", task.LeftData, task.Znak, task.RightData))
+		db_connect.AgentPing(ctx, db, id, "process", fmt.Sprintf("%f %s %f", task.LeftData, task.Znak, task.RightData))
 
 		var res float64
+		expression, err := db_connect.GetExpressionByID(ctx, db, task.ExpressionId)
+		if err != nil {
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
+			db_connect.DeleteOperation(ctx, db, taskId)
+			continue
+		}
+		operationsTime, err := db_connect.GetOperationsTimeByUserID(ctx, db, expression.UserId)
+		if err != nil {
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
+			db_connect.DeleteOperation(ctx, db, taskId)
+			continue
+		}
 		switch task.Znak {
 		case "+":
-			t, _ := db.GetOperationTimeByID(1)
-			time.Sleep(time.Duration(t.Plus) * time.Second)
+			time.Sleep(time.Duration(operationsTime.Plus) * time.Second)
 			res = task.LeftData + task.RightData
 		case "-":
-			t, _ := db.GetOperationTimeByID(2)
-			time.Sleep(time.Duration(t.Minus) * time.Second)
+			time.Sleep(time.Duration(operationsTime.Minus) * time.Second)
 			res = task.LeftData - task.RightData
 		case "*":
-			t, _ := db.GetOperationTimeByID(3)
-			time.Sleep(time.Duration(t.Multiplication) * time.Second)
+			time.Sleep(time.Duration(operationsTime.Multiplication) * time.Second)
 			res = task.LeftData * task.RightData
 		case "/":
 			if task.RightData == 0 {
-				db.OhNoFinalOperationError(task.FinalOperationId)
-				db.Delete(task.Id)
-				db.AgentPing(id, "waiting", "")
+				db_connect.OhNoExpressionError(ctx, db, task.ExpressionId)
+				db_connect.DeleteOperation(ctx, db, task.Id)
+				db_connect.AgentPing(ctx, db, id, "waiting", "")
 				continue
 			}
-			t, _ := db.GetOperationTimeByID(4)
-			time.Sleep(time.Duration(t.Division) * time.Second)
+			time.Sleep(time.Duration(operationsTime.Division) * time.Second)
 			res = task.LeftData / task.RightData
 		}
-		finOper, err := db.GetFinalOperationByID(task.FinalOperationId)
-		if finOper.Status != "process" { // Закончено вычисление финального выражения из за ошибки или чего то ещё
-			db.Delete(task.Id)
-			db.AgentPing(id, "waiting", "")
+		if expression.Status != "process" { // Закончено вычисление финального выражения из за ошибки или чего то ещё
+			db_connect.DeleteOperation(ctx, db, task.Id)
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
 			continue
 		}
 		if task.FatherId == -1 {
 			// Это была последняя операция в выражении
-			db.UpdateFinalOperation(task.FinalOperationId, res, "done")
-			db.Delete(task.Id)
-			db.AgentPing(id, "waiting", "")
+			db_connect.UpdateExpression(ctx, db, task.ExpressionId, res, "done")
+			db_connect.DeleteOperation(ctx, db, task.Id)
+			db_connect.AgentPing(ctx, db, id, "waiting", "")
 			continue
 		}
 		if task.SonSide == 0 {
-			err := db.UpdateLeft(task.FatherId, res)
+			err := db_connect.UpdateLeftOperation(ctx, db, task.FatherId, res)
 			if err != nil {
-				db.AgentPing(id, "waiting", "")
-				db.OhNoFinalOperationError(task.FinalOperationId)
-				db.Delete(taskId)
+				db_connect.AgentPing(ctx, db, id, "waiting", "")
+				db_connect.OhNoExpressionError(ctx, db, task.ExpressionId)
+				db_connect.DeleteOperation(ctx, db, taskId)
 				continue
 			}
 		} else {
-			err := db.UpdateRight(task.FatherId, res)
+			err := db_connect.UpdateRightOperation(ctx, db, task.FatherId, res)
 			if err != nil {
-				db.AgentPing(id, "waiting", "")
-				db.OhNoFinalOperationError(task.FinalOperationId)
-				db.Delete(taskId)
+				db_connect.AgentPing(ctx, db, id, "waiting", "")
+				db_connect.OhNoExpressionError(ctx, db, task.ExpressionId)
+				db_connect.DeleteOperation(ctx, db, taskId)
 				continue
 			}
 		}
-		if ready, _ := db.IsReadyToExecute(task.FatherId); ready {
+		if ready, _ := db_connect.IsReadyToExecuteOperation(ctx, db, task.FatherId); ready {
 			// Отправляем операцию выше в очередь на выполнение
 			go func(task entities.Operation) {
 				err = ch.PublishWithContext(
@@ -185,12 +192,12 @@ func Agent() {
 						Body:        []byte(fmt.Sprintf("%d", task.FatherId)),
 					})
 				if err != nil {
-					db.AgentPing(id, "waiting", "")
-					db.OhNoFinalOperationError(task.FinalOperationId)
+					db_connect.AgentPing(ctx, db, id, "waiting", "")
+					db_connect.OhNoExpressionError(ctx, db, task.ExpressionId)
 				}
 			}(task)
 		}
-		db.Delete(task.Id)
-		db.AgentPing(id, "waiting", "")
+		db_connect.DeleteOperation(ctx, db, task.Id)
+		db_connect.AgentPing(ctx, db, id, "waiting", "")
 	}
 }

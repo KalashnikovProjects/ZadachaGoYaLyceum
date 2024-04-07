@@ -91,14 +91,14 @@
                 if (~~(status / 100) === 2) {
                     const resultObject = JSON.parse(text);
                     let inner = `
-                        <p><strong>ID:</strong> ${resultObject.Id}</p>
-                        <p><strong>Выражение:</strong> ${resultObject.NeedToDo}</p>
-                        <p><strong>Статус:</strong> ${ {"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[resultObject.Status]}</p>
-                        <p><strong>Начало вычисления:</strong> ${[new Date(resultObject.StartTime * 1000).toLocaleString()]}</p>
+                        <p><strong>ID:</strong> ${resultObject.id}</p>
+                        <p><strong>Выражение:</strong> ${resultObject.neet_to_do}</p>
+                        <p><strong>Статус:</strong> ${ {"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[resultObject.status]}</p>
+                        <p><strong>Начало вычисления:</strong> ${[new Date(resultObject.start_time * 1000).toLocaleString()]}</p>
                     `
-                    if (resultObject.Status === "done") {
-                        inner += `<p><strong>Конец вычисления:</strong> ${[new Date(resultObject.EndTime * 1000).toLocaleString()]}</p>`
-                        inner += `<p><strong>Результат:</strong> ${resultObject.Result}</p>`
+                    if (resultObject.status === "done") {
+                        inner += `<p><strong>Конец вычисления:</strong> ${[new Date(resultObject.end_time * 1000).toLocaleString()]}</p>`
+                        inner += `<p><strong>Результат:</strong> ${resultObject.result}</p>`
                     }
                     document.getElementById('result2').innerHTML = inner;
                 } else if (~~(status / 100) === 4) {

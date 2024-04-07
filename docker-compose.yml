@@ -19,7 +19,8 @@ services:
       context: ./
       dockerfile: Docker/Dockerfile.orchestrator
     environment:
-      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
+      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres?sslmode=disable"
+      HMAC: "GFBKJWABGJKWHABGJWAHBGWAKLWKJNGLKJNKABWGH"
     ports:
       - "8080:8080"
     depends_on:
@@ -53,7 +54,7 @@ services:
       dockerfile: Docker/Dockerfile.agents
     environment:
       AGENT_COUNT: "5"
-      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres"
+      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres?sslmode=disable"
 
     depends_on:
       - rabbitmq
@@ -69,7 +70,7 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "5050:80"
+      - "10110:80"
 
 volumes:
   postgres:

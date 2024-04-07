@@ -6,7 +6,6 @@ COPY go.mod .
 COPY go.sum .
 
 RUN go mod download
-COPY ./config ./config
 COPY ./internal ./internal
 COPY ./cmd/agents ./cmd/agents
 

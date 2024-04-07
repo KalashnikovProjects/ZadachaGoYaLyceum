@@ -56,10 +56,10 @@
             const agentDataElement = $('#agentData');
             data.forEach(agent => {
                 const row = $('<tr>').append(
-                    $('<td>').text(agent.Id),
-                    $('<td>').html({"waiting": "<span style='color: orange; '>В ожидании задачи</span>", "error": "<span style='color: red; '>Ошибка</span>", "process": "<span style='color: green; '>Выполняет задачу</span>"}[agent.Status]),
-                    $('<td>').text(agent.StatusText),
-                    $('<td>').text(new Date(agent.PingTime * 1000).toLocaleString())
+                    $('<td>').text(agent.id),
+                    $('<td>').html({"waiting": "<span style='color: orange; '>В ожидании задачи</span>", "error": "<span style='color: red; '>Ошибка</span>", "process": "<span style='color: green; '>Выполняет задачу</span>"}[agent.status]),
+                    $('<td>').text(agent.status_text),
+                    $('<td>').text(new Date(agent.ping_time * 1000).toLocaleString())
                 );
                 agentDataElement.append(row);
             });

@@ -1,9 +1,11 @@
 package auth
 
 import (
-	"Zadacha/pkg/my_errors"
+	"Zadacha/internal/my_errors"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"os"
+	"time"
 )
 
 func LoadUserIdFromToken(token string) (int, error) {
@@ -20,8 +22,43 @@ func LoadUserIdFromToken(token string) (int, error) {
 	}
 
 	if claims, ok := tokenFromString.Claims.(jwt.MapClaims); ok {
-		return claims["id"].(int), nil
+		return int(claims["id"].(float64)), nil
 	} else {
 		return 0, my_errors.AuthenticationError
 	}
+}
+
+func GenerateTokenFromId(userId int) (string, error) {
+	hmac := os.Getenv("HMAC")
+	now := time.Now()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":  userId,
+		"nbf": now.Unix(),
+		"exp": now.Add(1 * 24 * time.Hour).Unix(),
+		"iat": now.Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(hmac))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+
+}
+
+func ComparePasswordWithHashed(password, hashedPassword string) error {
+	incoming := []byte(password)
+	existing := []byte(hashedPassword)
+	return bcrypt.CompareHashAndPassword(existing, incoming)
+}
+
+func GenerateHashedPassword(password string) (string, error) {
+	saltedBytes := []byte(password)
+	hashedBytes, err := bcrypt.GenerateFromPassword(saltedBytes, bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	hash := string(hashedBytes)
+	return hash, nil
 }
