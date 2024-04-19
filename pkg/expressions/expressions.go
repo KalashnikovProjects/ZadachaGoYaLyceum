@@ -1,7 +1,7 @@
 package expressions
 
 import (
-	"Zadacha/internal/my_errors"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
 	"regexp"
 	"strings"
 )

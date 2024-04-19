@@ -1,13 +1,12 @@
 package db_connect
 
 import (
-	"Zadacha/internal/entities"
 	"context"
-	"database/sql"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/entities"
 	"time"
 )
 
-func AgentPing(ctx context.Context, db *sql.DB, id int, status, statusText string) int {
+func AgentPing(ctx context.Context, db SQLQueryExec, id int, status, statusText string) int {
 	if status == "create" {
 		var newId int
 		err := db.QueryRowContext(ctx, "INSERT INTO agents (status, status_text, ping_time) VALUES ($1, $2, $3) RETURNING id",
@@ -26,12 +25,12 @@ func AgentPing(ctx context.Context, db *sql.DB, id int, status, statusText strin
 	return id
 }
 
-func DeleteAgent(ctx context.Context, db *sql.DB, id int) error {
+func DeleteAgent(ctx context.Context, db SQLQueryExec, id int) error {
 	_, err := db.ExecContext(ctx, "DELETE FROM agents WHERE id = $1", id)
 	return err
 }
 
-func GetAllAgents(ctx context.Context, db *sql.DB) ([]entities.Agent, error) {
+func GetAllAgents(ctx context.Context, db SQLQueryExec) ([]entities.Agent, error) {
 	var agents []entities.Agent
 	rows, err := db.QueryContext(ctx, "SELECT id, status, status_text, ping_time FROM agents")
 	if err != nil {

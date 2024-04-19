@@ -2,9 +2,9 @@
 
 Проект, состоящий из микросервисов, разделяет выражение на минимальные операции и выполняет каждую на отдельном агенте.
 
-[<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/zadacha-main.png" width="600"/>](zadacha-main.png)
+[<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/zadacha-main.png" width="600"/>](images/zadacha-main.png)
 
-[<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/zadacha-agents.png" width="600"/>](zadacha-agents.png)
+[<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/zadacha-agents.png" width="600"/>](images/zadacha-agents.png)
 
 * Автор - https://t.me/K_alashni_k (если что-то не работает или не запускается - напиши мне пж)
 * Постараюсь всё максимально объяснить, но если что-то не понятно, то пишите в тг.

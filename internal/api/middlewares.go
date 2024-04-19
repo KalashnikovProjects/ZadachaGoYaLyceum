@@ -1,8 +1,8 @@
 package api
 
 import (
-	"Zadacha/internal/auth"
 	"context"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/auth"
 	"net/http"
 	"strings"
 )

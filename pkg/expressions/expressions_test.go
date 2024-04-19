@@ -1,8 +1,8 @@
 package expressions
 
 import (
-	"Zadacha/internal/my_errors"
 	"errors"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
 	"testing"
 )
 

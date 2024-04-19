@@ -1,0 +1,26 @@
+syntax = "proto3";
+package agent;
+option go_package = "github.com/KalashnikovProjects/ZadachaGoYaLyceum";
+
+message OperationRequest {
+  string znak = 1;
+  float  left = 2;
+  float  right = 3;
+  OperationTimes times = 4;
+}
+
+message OperationTimes {
+  int32 plus = 1;
+  int32 minus = 2;
+  int32 division = 3;
+  int32 multiplication = 4;
+}
+
+message OperationResponse {
+  string status = 1;
+  float  result = 2;
+}
+
+service AgentsService {
+  rpc ExecuteOperation (OperationRequest) returns (OperationResponse);
+}

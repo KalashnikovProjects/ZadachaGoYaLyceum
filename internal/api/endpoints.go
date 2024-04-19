@@ -1,20 +1,22 @@
 package api
 
 import (
-	"Zadacha/internal/auth"
-	"Zadacha/internal/db_connect"
-	"Zadacha/internal/entities"
-	"Zadacha/internal/my_errors"
-	"Zadacha/internal/orchestrator"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/auth"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/db_connect"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/entities"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/orchestrator"
+	pb "github.com/KalashnikovProjects/ZadachaGoYaLyceum/proto"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
-	amqp "github.com/rabbitmq/amqp091-go"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
 	"net/http"
@@ -24,8 +26,8 @@ import (
 )
 
 type Server struct {
-	db *sql.DB
-	ch *amqp.Channel
+	db         *sql.DB
+	gRPCClient pb.AgentsServiceClient
 }
 
 // getExpressions обработчик GET запроса на /expressions
@@ -68,7 +70,7 @@ func (server *Server) newExpression(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	expression := string(expressionBytes)
-	expressionId, err := orchestrator.StartExpression(ctx, server.ch, server.db, expression)
+	expressionId, err := orchestrator.StartExpression(ctx, server.db, server.gRPCClient, expression)
 	if err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, my_errors.StrangeSymbolsError) || errors.Is(err, my_errors.StrangeSymbolsError) {
@@ -190,37 +192,24 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 
 // Run запускает сервер API
 func Run() {
-	var conn *amqp.Connection
+	host := "localhost"
+	port := "9090"
+
+	addr := fmt.Sprintf("%s:%s", host, port)
 	var err error
-	fmt.Println("Кролик загружается")
+	log.Println("Загрузка подключения к gRPC (оркестратор)")
+
+	var conn *grpc.ClientConn
 	for {
-		conn, err = amqp.Dial("amqp://rmuser:rmpassword@rabbitmq:5672/")
+		conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err == nil {
 			break
 		}
-		time.Sleep(1 * time.Second)
-		// Ждём пока запустится кролик
 	}
+	gRPCClient := pb.NewAgentsServiceClient(conn)
 	defer conn.Close()
-	fmt.Println("Кролик загрузился")
-	// Создаем канал
-	ch, err := conn.Channel()
-	if err != nil {
-		log.Fatalf("Не удалось открыть канал: %v", err)
-	}
-	defer ch.Close()
-	// Объявляем очередь
-	_, err = ch.QueueDeclare(
-		"task_queue", // Имя очереди
-		true,         // durable
-		false,        // delete when unused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
-	)
-	if err != nil {
-		log.Fatalf("Не удалось объявить очередь: %v", err)
-	}
+	log.Println("Подключено к gRPC (оркестратор)")
+
 	var db *sql.DB
 	log.Println("Загрузка базы данных оркестратора")
 	for {
@@ -232,7 +221,7 @@ func Run() {
 	}
 	log.Println("Базы данных оркестратора загружена")
 	defer db.Close()
-	server := Server{db: db, ch: ch}
+	server := Server{db: db, gRPCClient: gRPCClient}
 	router := mux.NewRouter()
 
 	// Необходим токен

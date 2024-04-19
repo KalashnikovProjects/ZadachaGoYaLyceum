@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"Zadacha/internal/my_errors"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"os"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Zadacha/internal/user_server"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/user_server"
 	"github.com/xlab/closer"
 )
 

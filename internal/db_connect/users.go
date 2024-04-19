@@ -1,12 +1,11 @@
 package db_connect
 
 import (
-	"Zadacha/internal/entities"
 	"context"
-	"database/sql"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/entities"
 )
 
-func CreateUser(ctx context.Context, db *sql.DB, user entities.User) (int, error) {
+func CreateUser(ctx context.Context, db SQLQueryExec, user entities.User) (int, error) {
 	var id int
 	operationsTimeId, err := CreateOperationsTime(ctx, db)
 	if err != nil {
@@ -20,7 +19,7 @@ func CreateUser(ctx context.Context, db *sql.DB, user entities.User) (int, error
 	return id, nil
 }
 
-func GetUserByID(ctx context.Context, db *sql.DB, id int) (entities.User, error) {
+func GetUserByID(ctx context.Context, db SQLQueryExec, id int) (entities.User, error) {
 	var user entities.User
 	row := db.QueryRowContext(ctx, "SELECT id, name, password_hash, operations_time_id FROM users WHERE id = $1", id)
 	err := row.Scan(&user.Id, &user.Name, &user.PasswordHash, &user.OperationsTimeId)
@@ -30,7 +29,7 @@ func GetUserByID(ctx context.Context, db *sql.DB, id int) (entities.User, error)
 	return user, nil
 }
 
-func GetUserByName(ctx context.Context, db *sql.DB, name string) (entities.User, error) {
+func GetUserByName(ctx context.Context, db SQLQueryExec, name string) (entities.User, error) {
 	var user entities.User
 	row := db.QueryRowContext(ctx, "SELECT id, name, password_hash, operations_time_id FROM users WHERE name = $1", name)
 	err := row.Scan(&user.Id, &user.Name, &user.PasswordHash, &user.OperationsTimeId)

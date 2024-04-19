@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Zadacha/internal/api"
+	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/api"
 	"github.com/xlab/closer"
 )
 
