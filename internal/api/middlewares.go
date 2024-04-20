@@ -23,7 +23,7 @@ func AuthenticationMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), userId, "userId")
+		ctx := context.WithValue(r.Context(), "userId", userId)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

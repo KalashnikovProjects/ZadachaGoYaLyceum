@@ -38,7 +38,7 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 			id SERIAL PRIMARY KEY,
 			name TEXT UNIQUE NOT NULL,
 			password_hash TEXT NOT NULL,
-			operations_time_id INTEGER REFERENCES operations_times (id)
+			operations_time_id INTEGER NOT NULL 
 		);
 
 		CREATE TABLE IF NOT EXISTS expressions (
@@ -48,7 +48,7 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 			result FLOAT8,
 			start_time INTEGER,
 			end_time INTEGER,
-			user_id INTEGER REFERENCES users (id) NOT NULL
+			user_id INTEGER NOT NULL
 		);
 		
 		CREATE TABLE IF NOT EXISTS operations (
@@ -58,9 +58,9 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 			left_data FLOAT8,
 			right_is_ready INTEGER,
 			right_data FLOAT8,
-			father_id INTEGER REFERENCES operations (id),
+			father_id INTEGER,
 			son_side INTEGER NOT NULL,
-			expression_id INTEGER REFERENCES expressions (id) NOT NULL
+			expression_id INTEGER NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS agents (

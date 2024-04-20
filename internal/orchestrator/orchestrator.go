@@ -29,7 +29,7 @@ func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServic
 		}
 	}()
 
-	op := entities.Expression{Status: "process", NeedToDo: expression, StartTime: int(time.Now().Unix())}
+	op := entities.Expression{Status: "process", NeedToDo: expression, StartTime: int(time.Now().Unix()), UserId: ctx.Value("userId").(int)}
 	expressionId, err := db_connect.CreateExpression(ctx, tx, op)
 	if err != nil {
 		return 0, err
@@ -111,7 +111,7 @@ func ProcessOperation(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServi
 		Left:  float32(opera.LeftData),
 		Right: float32(opera.RightData)}
 
-	// TODO: таймаут для grpc, после чего перепопытка
+	// TODO: таймаут для grpc, после чего перепопытка, запуск в машину при запуске оркестратора
 	operationResponse, err := gRPCClient.ExecuteOperation(ctx, operationRequest)
 	if err != nil || operationResponse.Status == "error" {
 		db_connect.OhNoExpressionError(ctx, db, expressionId)

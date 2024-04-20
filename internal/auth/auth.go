@@ -20,7 +20,6 @@ func LoadUserIdFromToken(token string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	if claims, ok := tokenFromString.Claims.(jwt.MapClaims); ok {
 		return int(claims["id"].(float64)), nil
 	} else {
@@ -34,7 +33,7 @@ func GenerateTokenFromId(userId int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  userId,
 		"nbf": now.Unix(),
-		"exp": now.Add(1 * 24 * time.Hour).Unix(),
+		"exp": now.Add(5 * 24 * time.Hour).Unix(),
 		"iat": now.Unix(),
 	})
 

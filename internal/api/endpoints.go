@@ -87,8 +87,8 @@ func (server *Server) newExpression(w http.ResponseWriter, r *http.Request) {
 func (server *Server) getOperations(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userId := ctx.Value("userId").(int)
-	operations, _ := db_connect.GetOperationsTimeByUserID(ctx, server.db, userId)
-	res, _ := json.Marshal(operations)
+	operationsTime, _ := db_connect.GetOperationsTimeByUserID(ctx, server.db, userId)
+	res, _ := json.Marshal(operationsTime)
 	w.Write(res)
 }
 
@@ -99,11 +99,13 @@ func (server *Server) putOperations(w http.ResponseWriter, r *http.Request) {
 	userId := ctx.Value("userId").(int)
 	timeBytes, err := io.ReadAll(r.Body)
 	if err != nil {
+
 		http.Error(w, "bad json", http.StatusBadRequest)
 	}
 	var operationsTime entities.OperationsTime
 	err = json.Unmarshal(timeBytes, &operationsTime)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "bad json", http.StatusBadRequest)
 	}
 
@@ -133,22 +135,24 @@ func (server *Server) login(w http.ResponseWriter, r *http.Request) {
 	userBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "bad json", http.StatusBadRequest)
+		return
 	}
 
 	var user entities.User
 	err = json.Unmarshal(userBytes, &user)
-	if err != nil {
+	if err != nil || len(user.Name) == 0 || len(user.Password) == 0 {
 		http.Error(w, "bad json", http.StatusBadRequest)
+		return
 	}
 
 	dbUser, err := db_connect.GetUserByName(ctx, server.db, user.Name)
 	if err != nil {
-		http.Error(w, "name not found", http.StatusUnauthorized)
+		http.Error(w, "name not found", http.StatusBadRequest)
 		return
 	}
 	err = auth.ComparePasswordWithHashed(user.Password, dbUser.PasswordHash)
 	if err != nil {
-		http.Error(w, "wrong password", http.StatusUnauthorized)
+		http.Error(w, "wrong password", http.StatusBadRequest)
 		return
 	}
 	token, err := auth.GenerateTokenFromId(dbUser.Id)
@@ -166,15 +170,18 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 	userBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "bad json", http.StatusBadRequest)
+		return
 	}
 	var user entities.User
 	err = json.Unmarshal(userBytes, &user)
-	if err != nil {
+	if err != nil || len(user.Name) == 0 || len(user.Password) == 0 {
 		http.Error(w, "bad json", http.StatusBadRequest)
+		return
 	}
 	user.PasswordHash, err = auth.GenerateHashedPassword(user.Password)
 	if err != nil {
 		http.Error(w, "hashing error", http.StatusInternalServerError)
+		return
 	}
 	user.Password = ""
 	_, err = db_connect.CreateUser(ctx, server.db, user)
@@ -239,7 +246,7 @@ func Run() {
 	fmt.Println("API запущено на http://localhost:8080 (порт 8080)")
 	corsHandler := handlers.CORS(
 		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE"}),
-		handlers.AllowedHeaders([]string{"Content-Type"}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowCredentials(),
 	)

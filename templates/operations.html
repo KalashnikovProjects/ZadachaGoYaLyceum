@@ -1,120 +1,74 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Время выполнения операций</title>
-    <!-- Подключаем Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
+{{ define "content" }}
 <div class="container">
-    <h1 class="mt-5">Распределенный вычислитель арифметических выражений</h1>
-    <h2 class="mt-5">Выберите страницу:</h2>
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <a class="nav-link" href="/">Главная</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/agents">Статусы серверов (агентов)</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/expressions">Статусы выражений</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active" href="/operations">Длительность выполнения операций</a>
-        </li>
-    </ul>
     <div class="mt-5">
         <h1>Длительность выполнения операций</h1>
         <h3>(в секундах)</h3>
     </div>
-    <div id="operations"></div>
+    <div id="operations">
+        <form id="operationsForm" class="mt-5">
+            <label for="plus">Сложение: </label>
+            <input type="text" id="plus" name="plus" class="form-control"><br>
+            <label for="minus">Вычитание: </label>
+            <input type="text" id="minus" name="minus" class="form-control"><br>
+            <label for="division">Деление: </label>
+            <input type="text" id="division" name="division" class="form-control"><br>
+            <label for="multiplication">Умножение: </label>
+            <input type="text" id="multiplication" name="multiplication" class="form-control"><br>
+
+            <button type="submit" class="btn btn-success">Отправить</button>
+            <div id="response"></div>
+
+        </form>
+    </div>
 </div>
 
-<!-- Подключаем Bootstrap JS и jQuery (необходим для некоторых функций Bootstrap) -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
 <script>
-    // Функция для создания поля времени для каждой операции
-    function createOperationField(operation) {
-        const operationField = document.createElement('div');
-        operationField.classList.add('mt-3');
 
-        const header = document.createElement('h3');
-        header.textContent = ["Сложение +", "Вычитание -", "Умножение *", "Деление /"][operation.Id - 1];
-
-
-        const alo = document.createElement('div');
-        alo.classList.add('d-flex')
-        const inputField = document.createElement('input');
-        inputField.setAttribute('type', 'number');
-        inputField.setAttribute('value', operation.Time);
-        inputField.setAttribute('data-id', operation.Id);
-        inputField.classList.add('form-control', "mt-1", "w-25");
-
-        const submitButton = document.createElement('button');
-        submitButton.textContent = 'Отправить';
-        submitButton.classList.add('btn', 'btn-secondary');
-
-        const messageField = document.createElement('div');
-        messageField.classList.add('text-muted');
-
-
-        // Обработчик события для кнопки отправки
-        submitButton.addEventListener('click', function(event) {
-            const inputField = event.target.parentElement.querySelector('input');
-            const newTime = parseInt(inputField.value);
-            const operationId = inputField.getAttribute('data-id');
-            updateOperationTime(operationId, newTime, messageField);
-        });
-        operationField.appendChild(header);
-        alo.appendChild(inputField);
-        alo.appendChild(submitButton);
-        operationField.appendChild(alo)
-        operationField.appendChild(messageField);
-
-
-        return operationField;
-    }
-
-    // Функция для отправки PUT запроса на обновление времени операции
-    function updateOperationTime(operationId, newTime, messageField) {
-        fetch(`http://localhost:8080/operations/${operationId}`, {
+    document.getElementById('operationsForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        fetch(`http://localhost:8080/operations`, {
             method: 'PUT',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                "Authorization": "Bearer " + getCookie("token")
             },
-            body: JSON.stringify(newTime)
+            body: JSON.stringify({
+                plus: parseInt(document.getElementById('plus').value),
+                minus: parseInt(document.getElementById('minus').value),
+                division: parseInt(document.getElementById('division').value),
+                multiplication: parseInt(document.getElementById('multiplication').value),
+            })
         })
             .then(response => {
                 if (response.ok) {
-                    messageField.textContent = 'Длительность операции успешно обновлена!';
+                    document.getElementById('response').innerHTML = "Длительность операции успешно обновлена!";
                 } else {
-                    messageField.textContent = 'Не верная длительность операции';
+                    document.getElementById('response').innerHTML = "<span style='color: red; '>Не верная длительность операции</span> (должна быть от 1 до 100): ";
                 }
             })
             .catch(error => {
-                console.error('Ошибка при выполнении запроса:', error);
+                document.getElementById('response').innerHTML = "Ошибка: <span style='color: red; '>" + error + "</span>";
             });
-    }
+    })
 
-    // Запрос GET на сервер для получения списка операций
-    fetch('http://localhost:8080/operations')
-        .then(response => response.json())
-        .then(operations => {
-            const operationsContainer = document.getElementById('operations');
-            // Создаем поле времени для каждой операции
-            operations.forEach(operation => {
-                const operationField = createOperationField(operation);
-                operationsContainer.appendChild(operationField);
-            });
+    fetch('http://localhost:8080/operations',  {mode: 'cors', headers:
+            {"Authorization": "Bearer " + getCookie("token")}})
+        .then(response => {
+            if (response.ok) {
+                return response.json()
+            }
+            document.getElementById('response').innerHTML = "<span style='color: red; '>Ошибка</span>";
+            return null
+        }).then(operations => {
+            if (operations) {
+                document.getElementById('plus').value = operations.plus
+                document.getElementById('minus').value = operations.minus
+                document.getElementById('division').value = operations.division
+                document.getElementById('multiplication').value = operations.multiplication
+            }
         })
         .catch(error => {
-            console.error('Ошибка при выполнении запроса:', error);
+            document.getElementById('response').innerHTML = "Ошибка: <span style='color: red; '>" + error + "</span>";
         });
 </script>
-</body>
-</html>
+{{ end }}

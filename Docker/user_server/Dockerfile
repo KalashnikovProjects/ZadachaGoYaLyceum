@@ -9,13 +9,14 @@ RUN go mod download
 COPY ./templates ./templates
 COPY ./internal ./internal
 COPY ./cmd/user_server ./cmd/user_server
-COPY ../../proto ./proto
+COPY ./proto ./proto
 
 RUN CGO_ENABLED=0 go build -ldflags='-extldflags "-static"' -o user_server ./cmd/user_server
 
 # Final stage
 FROM scratch
 COPY --from=builder ./app/user_server ./app/user_server
+COPY --from=builder ./app/templates ./templates
 
 EXPOSE 80
 CMD ["/app/user_server"]

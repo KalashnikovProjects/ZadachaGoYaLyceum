@@ -1,35 +1,6 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Статусы серверов (агентов)</title>
-    <!-- Подключаем Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Подключаем DataTables CSS -->
-    <link href=https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.0/css/bootstrap.min.css rel=stylesheet>
-    <link href=https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/css/dataTables.bootstrap4.min.css rel=stylesheet>
-
-</head>
-<body>
+{{ define "content" }}
 <div class="container">
-    <h1 class="mt-5">Распределенный вычислитель арифметических выражений</h1>
-    <h2 class="mt-5">Выберите страницу:</h2>
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <a class="nav-link" href="/">Главная</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link active" href="/agents">Статусы серверов (агентов)</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/expressions">Статусы выражений</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/operations">Длительность выполнения операций</a>
-        </li>
-    </ul>
-    <h1 class="mt-5">Статусы серверов (агентов)</h1>
+    <h1 class="mt-5">Статусы воркеров (агентов)</h1>
     <table class="table" id="table">
         <thead class="thead-dark">
         <tr>
@@ -40,13 +11,10 @@
         </tr>
         </thead>
         <tbody id="agentData">
-        <!-- Здесь будут отображены данные -->
         </tbody>
     </table>
 </div>
 
-<!-- Подключаем Bootstrap JS и jQuery (необходим для некоторых функций Bootstrap) -->
-<script src=https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js></script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js></script>
 <script src=https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap4.min.js></script>
 <script>
@@ -73,6 +41,4 @@
             console.error('Ошибка при выполнении запроса:', error);
         });
 </script>
-
-</body>
-</html>
+{{ end }}
