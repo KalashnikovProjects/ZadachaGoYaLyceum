@@ -4,7 +4,7 @@
 
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/index.png" width="800" alt="Главная страница"/>
 
-## <details><summary>Скриншоты</summary>
+<details><summary>**Скриншоты**</summary>
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/expressions.png" alt="Страница статусов выражений" width="800"/>
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/login page.png" alt="Страница входа в аккаунт" width="800"/>
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/workers.png" alt="Страница воркеров" width="800"/>
