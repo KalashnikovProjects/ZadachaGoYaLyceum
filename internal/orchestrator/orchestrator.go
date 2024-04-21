@@ -8,7 +8,6 @@ import (
 	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
 	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/pkg/expressions"
 	pb "github.com/KalashnikovProjects/ZadachaGoYaLyceum/proto"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -111,7 +110,6 @@ func StartExpression(ctx context.Context, db db_connect.SQLTXQueryExec, gRPCClie
 		exInt, _ := strconv.ParseFloat(expression, 64)
 		err := db_connect.UpdateExpression(ctx, db, expressionId, exInt, "done")
 		if err != nil {
-			log.Println(err)
 			return 0, err
 		}
 	}
@@ -138,10 +136,20 @@ func ProcessOperation(db db_connect.SQLQueryExec, gRPCClient pb.AgentsServiceCli
 		Right: float32(opera.RightData),
 		Times: &timesReq,
 	}
-
-	// TODO: таймаут для grpc, после чего перепопытка,
-	operationResponse, err := gRPCClient.ExecuteOperation(ctx, operationRequest)
-	if err != nil || operationResponse.Status == "error" {
+	var operationResponse *pb.OperationResponse
+	for i := 0; i < 5; i++ {
+		ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+		defer cancel()
+		operationResponse, err = gRPCClient.ExecuteOperation(ctx, operationRequest)
+		if err == nil {
+			if operationResponse.Status == "error" {
+				db_connect.OhNoExpressionError(ctx, db, expressionId)
+				return
+			}
+			break
+		}
+	}
+	if operationResponse == nil {
 		db_connect.OhNoExpressionError(ctx, db, expressionId)
 		return
 	}

@@ -79,7 +79,7 @@ func (server *Server) newExpression(w http.ResponseWriter, r *http.Request) {
 	expressionId, err := orchestrator.StartExpression(ctx, server.db, server.gRPCClient, expression)
 	if err != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(err, my_errors.StrangeSymbolsError) || errors.Is(err, my_errors.StrangeSymbolsError) {
+		if errors.Is(err, my_errors.StrangeSymbolsError) || errors.Is(err, my_errors.ExpressionValidateError) {
 			status = http.StatusBadRequest
 		}
 		http.Error(w, err.Error(), status)

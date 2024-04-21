@@ -66,9 +66,7 @@ func UpdateExpression(ctx context.Context, db SQLQueryExec, id int, newResult fl
 }
 
 func OhNoExpressionError(ctx context.Context, db SQLQueryExec, id int) {
-	// Обновление статуса финальной операции на "error"
 	_, _ = db.ExecContext(ctx, "UPDATE expressions SET status = 'error', end_time = $1 WHERE id = $2", time.Now().Unix(), id)
 
-	// Удаление связанных операций
 	_, _ = db.ExecContext(ctx, "DELETE FROM operations WHERE expression_id = $1", id)
 }
