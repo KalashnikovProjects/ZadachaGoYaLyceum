@@ -72,6 +72,10 @@ func (server *Server) newExpression(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	expression := string(expressionBytes)
+	if len(expression) == 0 {
+		http.Error(w, "bad input", http.StatusBadRequest)
+		return
+	}
 	expressionId, err := orchestrator.StartExpression(ctx, server.db, server.gRPCClient, expression)
 	if err != nil {
 		status := http.StatusInternalServerError

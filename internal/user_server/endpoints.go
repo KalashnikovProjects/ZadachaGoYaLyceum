@@ -11,7 +11,8 @@ import (
 // Тут рендерятся шаблоны html
 
 type TemplateData struct {
-	Page string
+	Page   string
+	Logged bool
 }
 
 func Run() {
@@ -33,7 +34,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{"Главная"})
+	err = ts.Execute(w, TemplateData{"Главная", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -47,7 +48,7 @@ func agentsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{"Мониторинг воркеров"})
+	err = ts.Execute(w, TemplateData{"Мониторинг воркеров", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -60,8 +61,8 @@ func expressionsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-
-	err = ts.Execute(w, TemplateData{"Статусы выражений"})
+	log.Println(r.Context().Value("logged").(bool))
+	err = ts.Execute(w, TemplateData{"Статусы выражений", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -75,7 +76,7 @@ func operationsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{"Длительность выполнения операций"})
+	err = ts.Execute(w, TemplateData{"Длительность выполнения операций", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
@@ -89,7 +90,7 @@ func loginPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = ts.Execute(w, TemplateData{"Вход в аккаунт"})
+	err = ts.Execute(w, TemplateData{"Вход в аккаунт", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return

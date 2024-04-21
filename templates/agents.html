@@ -1,6 +1,6 @@
 {{ define "content" }}
 <div class="container">
-    <h1 class="mt-5">Статусы воркеров (агентов)</h1>
+    <h1 class="m-5">Статусы воркеров (агентов)</h1>
     <table class="table" id="table">
         <thead class="thead-dark">
         <tr>
@@ -15,8 +15,9 @@
     </table>
 </div>
 
-<script src=https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/jquery.dataTables.min.js></script>
-<script src=https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.20/js/dataTables.bootstrap4.min.js></script>
+<link href="https://cdn.datatables.net/v/dt/dt-2.0.5/datatables.min.css" rel="stylesheet">
+<script src="https://cdn.datatables.net/v/dt/dt-2.0.5/datatables.min.js"></script>
+
 <script>
     fetch('http://localhost:8080/agents')
         .then(response => response.json())

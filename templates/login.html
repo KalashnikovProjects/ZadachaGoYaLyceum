@@ -1,46 +1,47 @@
 {{ define "content" }}
-<div class="container">
-    <h3 class="mt-3">Что-бы продолжить нужно войти в аккаунт</h3>
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
+<div class="container w-25">
+    <h3 class="m-5 text-center">Что-бы продолжить нужно войти в аккаунт</h3>
+    <ul class="nav nav-underline nav-justified bg-body-tertiary text-white bg-secondary navbar-nav d-flex flex-row" id="myTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="login-tab" data-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">Вход</a>
+            <button class="nav-link btn-secondary active" id="login-tab" data-toggle="tab" href="#login" role="tab" aria-controls="login" aria-selected="true">Вход</button>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="register-tab" data-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="false">Регистрация</a>
+            <button class="nav-link btn-secondary" id="register-tab" data-toggle="tab" href="#register" role="tab" aria-controls="register" aria-selected="false">Регистрация</button>
         </li>
     </ul>
     <div class="tab-content" id="myTabContent">
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
             <form id="loginForm" class="mt-5">
-                <div class="form-group">
-                    <label for="loginUsername">Имя пользователя</label>
-                    <input type="text" class="form-control" id="loginUsername" name="username" required>
+                <div data-mdb-input-init class="form-outline mb-4">
+                    <label for="loginUsername" class="form-label">Имя пользователя</label>
+                    <input type="text" placeholder="Имя пользователя" class="form-control" id="loginUsername" name="username" required>
                 </div>
-                <div class="form-group">
-                    <label for="loginPassword">Пароль</label>
-                    <input type="password" class="form-control" id="loginPassword" name="password" required>
+
+                <div data-mdb-input-init class="form-outline mb-4">
+                    <label for="loginPassword" class="form-label">Пароль</label>
+                    <input type="password" placeholder="Пароль" class="form-control" id="loginPassword" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Войти</button>
+                <button type="submit" class="btn btn-success w-100 text-center">Войти</button>
                 <div id="loginError" class="text-danger mt-2"></div>
             </form>
         </div>
         <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
             <form id="registerForm" class="mt-5">
-                <div class="form-group">
-                    <label for="registerUsername">Имя пользователя</label>
-                    <input type="text" class="form-control" id="registerUsername" name="username" required>
+                <div data-mdb-input-init class="form-outline mb-4">
+                    <label for="registerUsername" class="form-label">Имя пользователя</label>
+                    <input type="text" placeholder="Имя пользователя" class="form-control" id="registerUsername" name="username" required>
                 </div>
-                <div class="form-group">
-                    <label for="registerPassword">Пароль</label>
-                    <input type="password" class="form-control" id="registerPassword" name="password" required>
+
+                <div data-mdb-input-init class="form-outline mb-4">
+                    <label for="registerPassword" class="form-label">Пароль</label>
+                    <input type="password" placeholder="Пароль" class="form-control" id="registerPassword" name="password" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
-                <div id="registerError" class="text-danger mt-2"></div>
+                <button type="submit" class="btn btn-success w-100 text-center">Зарегистрироваться</button>
+                <div id="loginError" class="text-danger mt-2"></div>
             </form>
         </div>
     </div>
 </div>
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const redirectUrl = urlParams.get('redirect') ?? '/';
@@ -96,8 +97,7 @@
                 window.location.href = "/login";
             } else {
                 // Выводим ошибку регистрации
-                const error = await response.text();
-                document.getElementById('registerError').textContent = error;
+                document.getElementById('registerError').textContent = await response.text();
             }
         } catch (error) {
             console.error('Error:', error);

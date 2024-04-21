@@ -142,7 +142,6 @@ func ProcessOperation(db db_connect.SQLQueryExec, gRPCClient pb.AgentsServiceCli
 	// TODO: таймаут для grpc, после чего перепопытка,
 	operationResponse, err := gRPCClient.ExecuteOperation(ctx, operationRequest)
 	if err != nil || operationResponse.Status == "error" {
-		log.Println(err)
 		db_connect.OhNoExpressionError(ctx, db, expressionId)
 		return
 	}

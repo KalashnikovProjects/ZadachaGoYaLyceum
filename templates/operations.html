@@ -7,13 +7,13 @@
     <div id="operations">
         <form id="operationsForm" class="mt-5">
             <label for="plus">Сложение: </label>
-            <input type="text" id="plus" name="plus" class="form-control"><br>
+            <input type="number" min="0" max="100" id="plus" name="plus" class="form-control"><br>
             <label for="minus">Вычитание: </label>
-            <input type="text" id="minus" name="minus" class="form-control"><br>
+            <input type="number" min="0" max="100" id="minus" name="minus" class="form-control"><br>
             <label for="division">Деление: </label>
-            <input type="text" id="division" name="division" class="form-control"><br>
+            <input type="number" min="0" max="100" id="division" name="division" class="form-control"><br>
             <label for="multiplication">Умножение: </label>
-            <input type="text" id="multiplication" name="multiplication" class="form-control"><br>
+            <input type="number" min="0" max="100" id="multiplication" name="multiplication" class="form-control"><br>
 
             <button type="submit" class="btn btn-success">Отправить</button>
             <div id="response"></div>
