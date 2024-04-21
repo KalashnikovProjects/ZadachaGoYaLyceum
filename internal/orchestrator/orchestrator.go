@@ -8,6 +8,7 @@ import (
 	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/my_errors"
 	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/pkg/expressions"
 	pb "github.com/KalashnikovProjects/ZadachaGoYaLyceum/proto"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -18,8 +19,20 @@ type StackPosition struct {
 	num float64 // Есть если id -1
 }
 
+// InitOrchestrator восстанавливает вычисления после перезапуска оркестратора
+func InitOrchestrator(ctx context.Context, db db_connect.SQLTXQueryExec, gRPCClient pb.AgentsServiceClient) {
+	ids, err := db_connect.GetReadyToExecuteOperations(ctx, db)
+	if err != nil {
+		return
+	}
+	for _, i := range ids {
+		i := i
+		go ProcessOperation(db, gRPCClient, i.OperationId, i.ExpressionId, i.OperationsTimeId)
+	}
+}
+
 // StartExpression инициализирует вычисление expression из строки
-func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServiceClient, expression string) (int, error) {
+func StartExpression(ctx context.Context, db db_connect.SQLTXQueryExec, gRPCClient pb.AgentsServiceClient, expression string) (int, error) {
 	var res []int
 	var numsStack []StackPosition
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{})
@@ -28,8 +41,8 @@ func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServic
 			tx.Rollback()
 		}
 	}()
-
-	op := entities.Expression{Status: "process", NeedToDo: expression, StartTime: int(time.Now().Unix()), UserId: ctx.Value("userId").(int)}
+	userId := ctx.Value("userId").(int)
+	op := entities.Expression{Status: "process", NeedToDo: expression, StartTime: int(time.Now().Unix()), UserId: userId}
 	expressionId, err := db_connect.CreateExpression(ctx, tx, op)
 	if err != nil {
 		return 0, err
@@ -54,8 +67,9 @@ func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServic
 				operation.RightIsReady = 1
 			}
 			id, err := db_connect.AddOperation(ctx, tx, &operation)
+			operation.Id = id
 			if operation.LeftIsReady == 1 && operation.RightIsReady == 1 {
-				res = append(res, operation.Id)
+				res = append(res, id)
 			}
 			if err != nil {
 				return 0, err
@@ -72,7 +86,7 @@ func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServic
 					return 0, err
 				}
 			}
-			numsStack = append(numsStack, StackPosition{id: operation.Id, num: -1})
+			numsStack = append(numsStack, StackPosition{id: id, num: -1})
 		default:
 			n, err := strconv.ParseFloat(s, 64)
 			if err != nil {
@@ -85,41 +99,58 @@ func StartExpression(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServic
 	if err != nil {
 		return 0, err
 	}
+	timesId, err := db_connect.GetOperationsTimeByUserID(ctx, db, userId)
+	if err != nil {
+		return 0, err
+	}
 	for _, i := range res {
 		i := i
-		go ProcessOperation(ctx, db, gRPCClient, i, expressionId)
+		go ProcessOperation(db, gRPCClient, i, expressionId, timesId.Id)
 	}
 	if len(res) == 0 {
 		exInt, _ := strconv.ParseFloat(expression, 64)
 		err := db_connect.UpdateExpression(ctx, db, expressionId, exInt, "done")
 		if err != nil {
+			log.Println(err)
 			return 0, err
 		}
 	}
 	return expressionId, nil
 }
 
-func ProcessOperation(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServiceClient, operationId, expressionId int) {
+func ProcessOperation(db db_connect.SQLQueryExec, gRPCClient pb.AgentsServiceClient, operationId, expressionId, timesId int) {
+	ctx := context.Background()
 	defer db_connect.DeleteOperation(ctx, db, operationId)
 	opera, err := db_connect.GetOperationByID(ctx, db, operationId)
 	if err != nil {
 		db_connect.OhNoExpressionError(ctx, db, expressionId)
 		return
 	}
+	times, err := db_connect.GetOperationsTimeByID(ctx, db, timesId)
+	if err != nil {
+		db_connect.OhNoExpressionError(ctx, db, expressionId)
+		return
+	}
+	timesReq := pb.OperationTimes{Plus: int32(times.Plus), Minus: int32(times.Minus), Division: int32(times.Division), Multiplication: int32(times.Multiplication)}
 	operationRequest := &pb.OperationRequest{
 		Znak:  opera.Znak,
 		Left:  float32(opera.LeftData),
-		Right: float32(opera.RightData)}
+		Right: float32(opera.RightData),
+		Times: &timesReq,
+	}
 
-	// TODO: таймаут для grpc, после чего перепопытка, запуск в машину при запуске оркестратора
+	// TODO: таймаут для grpc, после чего перепопытка,
 	operationResponse, err := gRPCClient.ExecuteOperation(ctx, operationRequest)
 	if err != nil || operationResponse.Status == "error" {
+		log.Println(err)
 		db_connect.OhNoExpressionError(ctx, db, expressionId)
 		return
 	}
 	res := float64(operationResponse.Result)
-	expression, _ := db_connect.GetExpressionByID(ctx, db, expressionId)
-	if expression.Status != "ok" {
+	expression, err := db_connect.GetExpressionByID(ctx, db, expressionId)
+	if err != nil || expression.Status != "process" {
+		// Выражение завершилось до этого (ошибка или как-то по другому)
+		db_connect.OhNoExpressionError(ctx, db, expressionId)
 		return
 	}
 	if opera.FatherId == -1 {
@@ -145,7 +176,7 @@ func ProcessOperation(ctx context.Context, db *sql.DB, gRPCClient pb.AgentsServi
 		}
 	}
 	if ready, _ := db_connect.IsReadyToExecuteOperation(ctx, db, opera.FatherId); ready {
-		// Отправляем операцию выше в очередь на выполнение
-		go ProcessOperation(ctx, db, gRPCClient, opera.FatherId, expressionId)
+		// Отправляем операцию уровнем выше на выполнение
+		go ProcessOperation(db, gRPCClient, opera.FatherId, expressionId, timesId)
 	}
 }

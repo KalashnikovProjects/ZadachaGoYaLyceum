@@ -1,11 +1,8 @@
 package entities
 
 // TODO:
-//    1. Middleware для user_server, проверяет session storage, если плохо: редирект на /login
-//    3  Добавить микро тестов                      - наполовину готово
+//    3  Добавить микро тестов                      - наполовину готово, сделать тесты для базы данных с моками
 //    4  Добавить 2-3 гига тестов всего и вся       - доделать модульный тест для api, написать для агентов
-//    .
-//    Запуск по агентикам всех operations при старте у которых IsReadyToExecuteOperation
 
 // Operation - ORM для базы данных sqlite и общее представление операции (x + y), мы храним состояние для каждого финального, начального и промежуточного вычисления
 // финальное вычисление - 2 готовых числа, промежуточное
@@ -54,4 +51,12 @@ type OperationsTime struct {
 	Minus          int `json:"minus"`
 	Division       int `json:"division"`
 	Multiplication int `json:"multiplication"`
+}
+
+// IdSoup Хз зачем, но пусть будет
+type IdSoup struct {
+	OperationId      int
+	ExpressionId     int
+	UserId           int
+	OperationsTimeId int
 }

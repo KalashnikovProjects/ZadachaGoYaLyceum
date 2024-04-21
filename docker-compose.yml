@@ -14,6 +14,17 @@ services:
     ports:
       - "5432:5432"
 
+  agents:
+    hostname: agents
+    build:
+      dockerfile: Docker/agent/Dockerfile
+    environment:
+      AGENT_COUNT: "5"
+      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres?sslmode=disable"
+      HMAC: "GFBKJWABGJKWHABGJWAHBGWAKLWKJNGLKJNKABWGH"
+    depends_on:
+      - postgres
+
   orchestrator:
     build:
       dockerfile: Docker/orchestrator/Dockerfile
@@ -23,6 +34,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
+      - agents
       - postgres
 
   user_server:
@@ -32,18 +44,6 @@ services:
       HMAC: "GFBKJWABGJKWHABGJWAHBGWAKLWKJNGLKJNKABWGH"
     ports:
       - "80:80"
-
-  agents:
-    build:
-      dockerfile: Docker/agent/Dockerfile
-    environment:
-      AGENT_COUNT: "5"
-      POSTGRES_STRING: "postgresql://postgres:mysecretpasswordalo@postgres:5432/postgres?sslmode=disable"
-      HMAC: "GFBKJWABGJKWHABGJWAHBGWAKLWKJNGLKJNKABWGH"
-    ports:
-      - "9090:9090"
-    depends_on:
-      - postgres
 
   pgadmin:
     container_name: pgadmin4_container

@@ -57,7 +57,9 @@ func (server *Server) getExpressionById(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("not found expression with id %d", id), http.StatusNotFound)
 		return
 	}
+
 	res, _ := json.Marshal(opera)
+
 	w.Write(res)
 }
 
@@ -105,10 +107,16 @@ func (server *Server) putOperations(w http.ResponseWriter, r *http.Request) {
 	var operationsTime entities.OperationsTime
 	err = json.Unmarshal(timeBytes, &operationsTime)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "bad json", http.StatusBadRequest)
+		return
 	}
-
+	check := []int{operationsTime.Plus, operationsTime.Minus, operationsTime.Division, operationsTime.Multiplication}
+	for _, op := range check {
+		if op > 100 || op < 0 {
+			http.Error(w, "bad time< normal 0 <= time <= 100)", http.StatusBadRequest)
+			return
+		}
+	}
 	err = db_connect.UpdateOperationsTimeByUserID(ctx, server.db, operationsTime, userId)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("server db error"), http.StatusInternalServerError)
@@ -199,7 +207,7 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 
 // Run запускает сервер API
 func Run() {
-	host := "localhost"
+	host := "agents"
 	port := "9090"
 
 	addr := fmt.Sprintf("%s:%s", host, port)
@@ -228,6 +236,8 @@ func Run() {
 	}
 	log.Println("Базы данных оркестратора загружена")
 	defer db.Close()
+	ctx := context.Background()
+	orchestrator.InitOrchestrator(ctx, db, gRPCClient)
 	server := Server{db: db, gRPCClient: gRPCClient}
 	router := mux.NewRouter()
 

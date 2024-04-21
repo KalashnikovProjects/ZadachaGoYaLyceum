@@ -16,5 +16,4 @@ RUN CGO_ENABLED=0 go build -ldflags='-extldflags "-static"' -o agents ./cmd/agen
 FROM scratch
 COPY --from=builder /app/agents /app/agents
 
-EXPOSE 9090
 ENTRYPOINT ["/app/agents"]

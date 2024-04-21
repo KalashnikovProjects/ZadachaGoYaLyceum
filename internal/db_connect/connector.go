@@ -17,6 +17,18 @@ type SQLQueryExec interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
+type SQLTXQueryExec interface {
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
 func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -28,10 +40,10 @@ func OpenDb(ctx context.Context, connectionString string) (*sql.DB, error) {
 	_, err = db.ExecContext(ctx, `
 		CREATE TABLE IF NOT EXISTS operations_times (
 			id SERIAL PRIMARY KEY,
-			plus INTEGER DEFAULT 10,
-			minus INTEGER DEFAULT 10,
-			division INTEGER DEFAULT 10,
-			multiplication INTEGER DEFAULT 10
+			plus INTEGER DEFAULT 10 CHECK(plus >= 0 AND plus <= 100),
+			minus INTEGER DEFAULT 10 CHECK(minus >= 0 AND minus <= 100),
+			division INTEGER DEFAULT 10 CHECK(division >= 0 AND division <= 100),
+			multiplication INTEGER DEFAULT 10 CHECK(multiplication >= 0 AND multiplication <= 100)
 		);
 
 		CREATE TABLE IF NOT EXISTS users (

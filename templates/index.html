@@ -82,7 +82,7 @@
                     if (resultObject) {
                         let inner = `
                 <p><strong>ID:</strong> ${resultObject.id}</p>
-                <p><strong>Выражение:</strong> ${resultObject.neet_to_do}</p>
+                <p><strong>Выражение:</strong> ${resultObject.need_to_do}</p>
                 <p><strong>Статус:</strong> ${ {"done": "Готово", "error": "<span style='color: red; '>Ошибка</span>", "process": "Вычисляется..."}[resultObject.status]}</p>
                 <p><strong>Начало вычисления:</strong> ${[new Date(resultObject.start_time * 1000).toLocaleString()]}</p>
             `

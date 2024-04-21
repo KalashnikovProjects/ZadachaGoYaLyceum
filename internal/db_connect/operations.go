@@ -5,6 +5,41 @@ import (
 	"github.com/KalashnikovProjects/ZadachaGoYaLyceum/internal/entities"
 )
 
+func GetReadyToExecuteOperations(ctx context.Context, db SQLQueryExec) ([]entities.IdSoup, error) {
+	var ops []entities.IdSoup
+	rows, err := db.QueryContext(ctx, `
+SELECT
+    o.id,
+    o.expression_id,
+    e.user_id,
+    u.operations_time_id
+FROM
+    operations o
+JOIN
+    expressions e ON o.expression_id = e.id
+JOIN
+    users u ON e.user_id = u.id
+WHERE
+    o.right_is_ready = 1
+    AND o.left_is_ready = 1;
+`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var op entities.IdSoup
+		err = rows.Scan(&op.OperationId, &op.ExpressionId, &op.UserId, &op.OperationsTimeId)
+		if err != nil {
+			return nil, err
+		}
+		ops = append(ops, op)
+	}
+
+	return ops, nil
+}
+
 func GetOperationByID(ctx context.Context, db SQLQueryExec, id int) (entities.Operation, error) {
 	var op entities.Operation
 	row := db.QueryRowContext(ctx, "SELECT id, znak, left_is_ready, left_data, right_is_ready, right_data, father_id, son_side, expression_id FROM operations WHERE id = $1", id)

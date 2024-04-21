@@ -41,9 +41,9 @@
         })
             .then(response => {
                 if (response.ok) {
-                    document.getElementById('response').innerHTML = "Длительность операции успешно обновлена!";
+                    document.getElementById('response').innerHTML = "Длительность операций успешно обновлена!";
                 } else {
-                    document.getElementById('response').innerHTML = "<span style='color: red; '>Не верная длительность операции</span> (должна быть от 1 до 100): ";
+                    document.getElementById('response').innerHTML = "<span style='color: red; '>Не верная длительность операции</span> (должна быть от 0 до 100): ";
                 }
             })
             .catch(error => {

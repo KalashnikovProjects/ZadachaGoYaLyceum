@@ -46,13 +46,12 @@ func ManagerAgent() {
 		go Agent(ctx, tasks)
 	}
 
-	host := "localhost"
+	host := "agents"
 	port := "9090"
 
 	addr := fmt.Sprintf("%s:%s", host, port)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		cancel()
 		panic(err)
 	}
 	fmt.Println("Запущен менеджер агентов на порту", port)
@@ -62,7 +61,6 @@ func ManagerAgent() {
 	pb.RegisterAgentsServiceServer(grpcServer, agentsServiceServer)
 
 	if err := grpcServer.Serve(lis); err != nil {
-		cancel()
 		panic(err)
 	}
 }

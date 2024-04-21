@@ -55,7 +55,7 @@ func GetAllExpressions(ctx context.Context, db SQLQueryExec) ([]entities.Express
 
 func UpdateExpression(ctx context.Context, db SQLQueryExec, id int, newResult float64, status string) error {
 	if userId, ok := ctx.Value("userId").(int); ok {
-		_, err := db.ExecContext(ctx, "UPDATE expressions SET status = $1, end_time = $2, result = $3 WHERE id = $4 AND user_id == $5",
+		_, err := db.ExecContext(ctx, "UPDATE expressions SET status = $1, end_time = $2, result = $3 WHERE id = $4 AND user_id = $5",
 			status, time.Now().Unix(), newResult, id, userId)
 		return err
 	}
