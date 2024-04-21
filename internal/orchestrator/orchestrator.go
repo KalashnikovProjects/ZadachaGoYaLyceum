@@ -137,7 +137,7 @@ func ProcessOperation(db db_connect.SQLQueryExec, gRPCClient pb.AgentsServiceCli
 		Times: &timesReq,
 	}
 	var operationResponse *pb.OperationResponse
-	for i := 0; i < 5; i++ {
+	for {
 		ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
 		defer cancel()
 		operationResponse, err = gRPCClient.ExecuteOperation(ctx, operationRequest)
@@ -148,6 +148,7 @@ func ProcessOperation(db db_connect.SQLQueryExec, gRPCClient pb.AgentsServiceCli
 			}
 			break
 		}
+		time.Sleep(10 * time.Second)
 	}
 	if operationResponse == nil {
 		db_connect.OhNoExpressionError(ctx, db, expressionId)
