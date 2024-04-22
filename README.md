@@ -110,4 +110,4 @@ cd internal/auth
 go test -v
 cd ../..
 ```
-
+## P.S. тесты ещё добавляю
