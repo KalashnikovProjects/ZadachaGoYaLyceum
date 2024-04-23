@@ -35,8 +35,8 @@
 ### Имеющиеся микросервисы:
 * **orchestrator** - оркестратор и API
 * **user_server** - сервер с FrontEnd, просто возвращает html
-* **agents** - запускает агентов, количество задаётся в 55 строке [docker-compose.yaml](docker-compose.yml) (там устанавливается environment)
-* **postgres** - база данных
+* **agents** - агент, запускает воркеров, количество задаётся в 22 строке [docker-compose.yaml](docker-compose.yml) (там устанавливается environment)
+* **postgres** - база данных PostgresSQL
 
 ## Тестирование и использование
 Инструкции для API не нужны ведь есть интерфейс на http://localhost:80/, API находится на http://localhost:8080/ , инструкции к нему есть в схеме
