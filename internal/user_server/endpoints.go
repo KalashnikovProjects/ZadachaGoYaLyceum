@@ -61,7 +61,6 @@ func expressionsPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)
 		return
 	}
-	log.Println(r.Context().Value("logged").(bool))
 	err = ts.Execute(w, TemplateData{"Статусы выражений", r.Context().Value("logged").(bool)})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Ошибка чтения файла: %v", err), http.StatusInternalServerError)

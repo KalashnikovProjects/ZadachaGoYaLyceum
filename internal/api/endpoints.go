@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
@@ -210,11 +211,14 @@ func (server *Server) register(w http.ResponseWriter, r *http.Request) {
 }
 
 // Run запускает сервер API
-func Run() {
-	host := "agents"
-	port := "9090"
+func Run(ctx context.Context) {
+	addr := os.Getenv("AGENT_ADDR")
+	if len(addr) == 0 {
+		host := "agents"
+		port := "9090"
+		addr = fmt.Sprintf("%s:%s", host, port)
+	}
 
-	addr := fmt.Sprintf("%s:%s", host, port)
 	var err error
 	log.Println("Загрузка подключения к gRPC (оркестратор)")
 
@@ -240,7 +244,6 @@ func Run() {
 	}
 	log.Println("Базы данных оркестратора загружена")
 	defer db.Close()
-	ctx := context.Background()
 	orchestrator.InitOrchestrator(ctx, db, gRPCClient)
 	server := Server{db: db, gRPCClient: gRPCClient}
 	router := mux.NewRouter()
@@ -264,5 +267,19 @@ func Run() {
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowCredentials(),
 	)
-	log.Fatal(http.ListenAndServe(":8080", corsHandler(router)))
+	httpServer := &http.Server{
+		Addr:    ":8080",
+		Handler: corsHandler(router),
+	}
+
+	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return httpServer.ListenAndServe()
+	})
+	<-gCtx.Done()
+	err = httpServer.Shutdown(ctx)
+	if err != nil {
+		fmt.Printf("exit reason: %s \n", err)
+	}
+
 }

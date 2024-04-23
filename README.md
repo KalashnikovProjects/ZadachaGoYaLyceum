@@ -9,7 +9,6 @@
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/login page.png" alt="Страница входа в аккаунт" width="800"/>
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/workers.png" alt="Страница воркеров" width="800"/>
 </details>
-
 * Автор - https://t.me/K_alashni_k (если что-то не работает или не запускается - напиши мне пж)
 * Если что-то не понятно, то тоже пишите в тг.
 * Буду рад если поставите звёздочку) ☆
@@ -77,25 +76,51 @@ https://excalidraw.com/#json=r-Xul8-656AqJ2I7FXNsD,twgOHC54lDg_xqVgwV19Xg
 
 5. За покрытие проекта интеграционными тестами можно получить бонусные 10 баллов
 
-**?? неполное покрытие**, есть большой интеграционный тест, который сам поднимает docker-compose, получает токены и делает запросы. Он запускает 3 под-теста с запущенным докером: 
+**✓ Да**, есть 2 больших интеграционных теста: для теста gRPC агента и для теста всего API.
+
+Оба теста поднимают с помощью testcontainers временный сервер postgres, для них создаются отдельные токены.
+
+### Что делает тест gRPC агента
+
+ Подключается по gRPC к агенту, просит выполнить всякие разные операции и сравнивает ответы. 
+
+### Покрытие тестом:
+
+<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/agent integration test coverage.png" width="500" style="float: left;" alt="Покрытие тестом gRPC агента"/>
+
+### Что делает тест API: 
+
+Получает токены и делает запросы на все endpoint'ы, проверяет правильность ответа. Он запускает 3 под-теста с запущенным докером: 
 
 * Под-тест для /login и /register
+
 * Под-тест для мидлвеера авторизации
-* Под-тест для /expressions (создание выражения, получение его по Id, получение всех выражений)
+
+* Под-тест для /expressions и /operations. Сначала создаёт много выражений, потом устанавливает время для выполнения операций, получает список всех выражений и сравнивает с тем что до этого создал, через некоторое время проверяет ответ на каждое выражение по его id.
+
+  
+
+### Покрытие тестом:
+
+<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/api integration test coverage.png" width="700" style="float: left;" alt="Покрытие тестом API"/>
+
+## Общее покрытие тестами
+
+<img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/all tests coverage.png" width="800" style="float: left;" alt="Общее покрытие тестами"/>
 
 ### Для запуска тестов:
 
 Через IDE или:
 
-* интеграционные тесты
+* Интеграционные тесты. Перед запуском интеграционных тестов необходимо выключить docker-compose (если запущен - `docker-compose down`)
 
 ```bash
-cd cmd/orchestrator
+cd tests
 go test -v
-cd ../..
+cd ..
 ```
 
-* тесты модуля валидации и перевода в инфиксную форму
+* Тесты модуля валидации и перевода в инфиксную форму
 
 ```bash
 cd pkg/expressions
@@ -103,11 +128,15 @@ go test -v
 cd ../..
 ```
 
-* тесты функции авторизации
+* Тесты функций авторизации
 
 ```bash
 cd internal/auth
 go test -v
 cd ../..
 ```
-## P.S. тесты ещё добавляю
+* Все тесты
+
+```bash
+go test -v ./...
+```

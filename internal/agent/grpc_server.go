@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pb "github.com/KalashnikovProjects/ZadachaGoYaLyceum/proto"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"net"
 	"os"
@@ -35,8 +36,7 @@ func (s *Server) ExecuteOperation(
 	return res, nil
 }
 
-func ManagerAgent() {
-	ctx := context.Background()
+func ManagerAgent(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -46,7 +46,7 @@ func ManagerAgent() {
 		go Agent(ctx, tasks)
 	}
 
-	host := "agents"
+	host := "[::]"
 	port := "9090"
 
 	addr := fmt.Sprintf("%s:%s", host, port)
@@ -59,8 +59,10 @@ func ManagerAgent() {
 	agentsServiceServer := NewServer(tasks)
 
 	pb.RegisterAgentsServiceServer(grpcServer, agentsServiceServer)
-
-	if err := grpcServer.Serve(lis); err != nil {
-		panic(err)
-	}
+	g, gCtx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		return grpcServer.Serve(lis)
+	})
+	<-gCtx.Done()
+	grpcServer.Stop()
 }

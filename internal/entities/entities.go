@@ -20,7 +20,7 @@ type Expression struct {
 	Id        int     `json:"id"`
 	NeedToDo  string  `json:"need_to_do"`
 	Status    string  `json:"status"` // error / process / done
-	Result    float64 `json:"result"` // если статус done, иначе -1
+	Result    float64 `json:"result"` // если статус done, иначе 0
 	StartTime int     `json:"start_time"`
 	EndTime   int     `json:"end_time"`
 	UserId    int     `json:"user_id"`
