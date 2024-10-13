@@ -10,7 +10,7 @@
 <img src="https://github.com/KalashnikovProjects/ZadachaGoYaLyceum/raw/master/images/workers.png" alt="Страница воркеров" width="800"/>
 </details>
 
-* Автор - https://t.me/K_alashni_k (если что-то не работает или не запускается - напиши мне пж)
+* Автор - https://t.me/Kalashn11k (если что-то не работает или не запускается - напиши мне пж)
 * Если что-то не понятно, то тоже пишите в тг.
 * Буду рад если поставите звёздочку) ☆
 ## Установка
